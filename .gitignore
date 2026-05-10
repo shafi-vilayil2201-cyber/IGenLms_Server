@@ -6,6 +6,8 @@
 # dotenv files
 .env
 
+
+
 # User-specific files
 *.rsuser
 *.suo
@@ -480,3 +482,4 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+src/IGenServer.API/appsettings.Development.json
