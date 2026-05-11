@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local development connection settings
+src/IGenServer.DbSync/appsettings.Development.json
+
 
 
 # User-specific files
