@@ -26,4 +26,11 @@ public sealed class UserRepository :IUserRepository
     {
         return _dbContext.SaveChangesAsync(cancellationToken);
     }
+    public Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .Include(x => x.StudentProfile)
+            .Include(x => x.MentorProfile)
+            .FirstOrDefaultAsync(x => x.Email == email,cancellationToken);
+    }
 }

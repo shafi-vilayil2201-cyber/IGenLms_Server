@@ -1,6 +1,7 @@
 // src/IGenServer.Infrastructure/DependencyInjection.cs
 using IGenServer.Application.Abstractions.Authentication;
 using IGenServer.Application.Abstractions.Persistence;
+using IGenServer.Application.Features.Auth.Commands.LoginUser;
 using IGenServer.Application.Features.Auth.Commands.RegisterUser;
 using IGenServer.Infrastructure.Authentication;
 using IGenServer.Persistance.Data;
@@ -25,7 +26,9 @@ public static class DependencyInjection
         services.AddScoped<RegisterUserCommandHandler>();
         services.AddScoped<RegisterUserCommandValidator>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
-
+        services.AddScoped<LoginUserCommandHandler>();
+        services.AddScoped<LoginUserCommandValidator>();
+        
         return services;
     }
     
