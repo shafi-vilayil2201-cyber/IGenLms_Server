@@ -14,10 +14,11 @@ public sealed class AuthController : ControllerBase
     public async Task<ActionResult<CommonResponse<AuthResponseDto>>> Register(
         [FromBody] RegisterUserRequestDto request,
         [FromServices] RegisterUserCommandHandler handler,
+        [FromServices] RegisterUserCommandValidator validator,
         CancellationToken cancellationToken)
     {
-        try
-        {
+     
+        
             var command = new RegisterUserCommand(
                 request.FullName,
                 request.Email,
@@ -26,6 +27,22 @@ public sealed class AuthController : ControllerBase
                 request.TargetYear,
                 request.Expertise
             );
+
+            var validationResult = await validator.ValidateAsync(command, cancellationToken);
+
+            if(!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors
+                    .Select(error => error.ErrorMessage)
+                    .ToArray();
+
+                return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
+                    "Validation failed.",errors
+                ));
+            }
+
+        try
+        {
             var response = await handler.Handle(command, cancellationToken);
 
             return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
@@ -41,3 +58,4 @@ public sealed class AuthController : ControllerBase
         }
     }
 }
+    

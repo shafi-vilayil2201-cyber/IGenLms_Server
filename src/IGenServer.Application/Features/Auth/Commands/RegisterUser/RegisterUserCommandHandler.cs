@@ -1,5 +1,6 @@
 
 
+using System.Text.Json;
 using IGenServer.Application.Abstractions.Authentication;
 using IGenServer.Application.Abstractions.Persistence;
 using IGenServer.Application.Features.Auth.DTOs;
@@ -14,7 +15,7 @@ public sealed class RegisterUserCommandHandler
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IJwtTokenGenerator _jwtTokenGeneratore;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
     public RegisterUserCommandHandler(
         IUserRepository userRepository,
@@ -23,21 +24,24 @@ public sealed class RegisterUserCommandHandler
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
-        _jwtTokenGeneratore = jwtTokenGenerator;
+        _jwtTokenGenerator = jwtTokenGenerator;
     }
 
     public async Task<AuthResponseDto> Handle(
         RegisterUserCommand command,
         CancellationToken cancellationToken = default)
     {
-        if(!Enum.TryParse<UserRole>(command.Role,true,out var userRole))
+        var roleParsed = Enum.TryParse<UserRole>(command.Role, true, out var userRole);
+        if(!roleParsed)
         {
-            throw new InvalidOperationException("Invalid user role");
+            throw new InvalidOperationException("Invalid user role.");
         }
+
         if(userRole == UserRole.Admin)
         {
-            throw new InvalidOperationException("Admin cannot register from the publicregistration flow.");
+            throw new InvalidOperationException("Admin cannot register from the public registration flow.");
         }
+
         var emailExists = await _userRepository.EmailExistsAsync(command.Email,cancellationToken);
 
         if(emailExists)
@@ -55,13 +59,9 @@ public sealed class RegisterUserCommandHandler
 
         if(userRole == UserRole.Student)
         {
-            if(!command.TargetYear.HasValue)
-            {
-                throw new InvalidOperationException("TargetYear is required for student registration");
-            }
             user.StudentProfile = new StudentProfile
             {
-                TargetYear = command.TargetYear.Value,
+                TargetYear = command.TargetYear!.Value,
                 StudyStreak = 0,
                 Rank = 0
             };
@@ -69,11 +69,10 @@ public sealed class RegisterUserCommandHandler
         }
         else
         {
-            user.MentorProfile = new MentorProfile
+             user.MentorProfile = new MentorProfile
             {
-                ExpertiseJson =command.Expertise is null
-                    ? "[]" : System.Text.Json.JsonSerializer.Serialize(command.Expertise),
-                    ApprovalStatus = MentorApprovalStatus.Pending
+                ExpertiseJson = JsonSerializer.Serialize(command.Expertise!),
+                ApprovalStatus = MentorApprovalStatus.Pending
             };
             nextStep = RegistrationNextStep.MentorOnboarding;
         }
@@ -81,7 +80,7 @@ public sealed class RegisterUserCommandHandler
         await _userRepository.AddAsync(user, cancellationToken);
         await _userRepository.SaveChangesAsync(cancellationToken);
 
-        var token = _jwtTokenGeneratore.GenerateToken(user);
+        var token = _jwtTokenGenerator.GenerateToken(user);
 
         return new AuthResponseDto
         {
