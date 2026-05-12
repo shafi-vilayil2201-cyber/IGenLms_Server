@@ -1,3 +1,6 @@
+using IGenServer.Application.Features.Auth.DTOs;
+using MediatR;
+
 namespace IGenServer.Application.Features.Auth.Commands.RegisterUser;
 
 public sealed record RegisterUserCommand(
@@ -6,4 +9,5 @@ public sealed record RegisterUserCommand(
     string Password,
     string Role,
     int? TargetYear,
-    List<string>? Expertise);
+    List<string>? Expertise
+    ) : IRequest<AuthResponseDto>;
