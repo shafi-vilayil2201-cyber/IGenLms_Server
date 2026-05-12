@@ -1,3 +1,4 @@
+using IGenServer.API.Middleware;
 using IGenServer.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +16,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
+
 
 app.MapControllers();
 
