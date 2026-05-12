@@ -1,11 +1,13 @@
 // src/IGenServer.Infrastructure/DependencyInjection.cs
+
+using FluentValidation;
 using IGenServer.Application.Abstractions.Authentication;
 using IGenServer.Application.Abstractions.Persistence;
-using IGenServer.Application.Features.Auth.Commands.LoginUser;
-using IGenServer.Application.Features.Auth.Commands.RegisterUser;
+using IGenServer.Application.Common.Behaviors;
 using IGenServer.Infrastructure.Authentication;
 using IGenServer.Persistance.Data;
 using IGenServer.Persistance.Repositories;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,17 +21,24 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(
+                configuration.GetConnectionString("DefaultConnection")));
 
-        services.AddScoped<IUserRepository,UserRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-        services.AddScoped<RegisterUserCommandHandler>();
-        services.AddScoped<RegisterUserCommandValidator>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
-        services.AddScoped<LoginUserCommandHandler>();
-        services.AddScoped<LoginUserCommandValidator>();
-        
+
+        services.AddMediatR(cfg =>
+            cfg.RegisterServicesFromAssembly(
+                typeof(IGenServer.Application.AssemblyReference).Assembly));
+
+        services.AddValidatorsFromAssembly(
+            typeof(IGenServer.Application.AssemblyReference).Assembly);
+
+        services.AddTransient(
+            typeof(IPipelineBehavior<,>),
+            typeof(ValidationBehavior<,>));
+
         return services;
     }
-    
 }

@@ -1,5 +1,3 @@
-
-
 using System.Text.Json;
 using IGenServer.Application.Abstractions.Authentication;
 using IGenServer.Application.Abstractions.Persistence;
@@ -7,11 +5,12 @@ using IGenServer.Application.Features.Auth.DTOs;
 using IGenServer.Application.Features.Auth.Enums;
 using IGenServer.Domain.Entities;
 using IGenServer.Domain.Enums;
+using MediatR;
 
 namespace IGenServer.Application.Features.Auth.Commands.RegisterUser;
 
-
 public sealed class RegisterUserCommandHandler
+    : IRequestHandler<RegisterUserCommand, AuthResponseDto>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
@@ -29,25 +28,27 @@ public sealed class RegisterUserCommandHandler
 
     public async Task<AuthResponseDto> Handle(
         RegisterUserCommand command,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         var roleParsed = Enum.TryParse<UserRole>(command.Role, true, out var userRole);
-        if(!roleParsed)
+
+        if (!roleParsed)
         {
             throw new InvalidOperationException("Invalid user role.");
         }
 
-        if(userRole == UserRole.Admin)
+        if (userRole == UserRole.Admin)
         {
             throw new InvalidOperationException("Admin cannot register from the public registration flow.");
         }
 
-        var emailExists = await _userRepository.EmailExistsAsync(command.Email,cancellationToken);
+        var emailExists = await _userRepository.EmailExistsAsync(command.Email, cancellationToken);
 
-        if(emailExists)
+        if (emailExists)
         {
             throw new InvalidOperationException("A user with this email already exists.");
         }
+
         var user = new User
         {
             FullName = command.FullName,
@@ -55,9 +56,10 @@ public sealed class RegisterUserCommandHandler
             PasswordHash = _passwordHasher.HashPassword(command.Password),
             Role = userRole
         };
+
         RegistrationNextStep nextStep;
 
-        if(userRole == UserRole.Student)
+        if (userRole == UserRole.Student)
         {
             user.StudentProfile = new StudentProfile
             {
@@ -65,15 +67,17 @@ public sealed class RegisterUserCommandHandler
                 StudyStreak = 0,
                 Rank = 0
             };
+
             nextStep = RegistrationNextStep.StudentDashboard;
         }
         else
         {
-             user.MentorProfile = new MentorProfile
+            user.MentorProfile = new MentorProfile
             {
                 ExpertiseJson = JsonSerializer.Serialize(command.Expertise!),
                 ApprovalStatus = MentorApprovalStatus.Pending
             };
+
             nextStep = RegistrationNextStep.MentorOnboarding;
         }
 
@@ -92,5 +96,4 @@ public sealed class RegisterUserCommandHandler
             NextStep = nextStep.ToString()
         };
     }
-
 }

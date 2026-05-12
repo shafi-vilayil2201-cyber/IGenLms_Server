@@ -5,10 +5,12 @@ using IGenServer.Application.Features.Auth.DTOs;
 using IGenServer.Application.Features.Auth.Enums;
 using IGenServer.Domain.Entities;
 using IGenServer.Domain.Enums;
+using MediatR;
 
 namespace IGenServer.Application.Features.Auth.Commands.LoginUser;
 
-public sealed class LoginUserCommandHandler
+public sealed class LoginUserCommandHandler 
+    : IRequestHandler<LoginUserCommand, AuthResponseDto>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
@@ -27,12 +29,11 @@ public sealed class LoginUserCommandHandler
 
     public async Task<AuthResponseDto> Handle(
         LoginUserCommand command,
-        CancellationToken cancellationToken= default
-    )
+        CancellationToken cancellationToken )
     {
         var user = await _userRepository.GetByEmailAsync(command.Email, cancellationToken);
 
-        if(user is null)
+        if(user is null || !_passwordHasher.VerifyPassword(command.Password, user.PasswordHash))
         {
             throw new InvalidOperationException("Invalid email or password.");
         }

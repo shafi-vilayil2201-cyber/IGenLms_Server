@@ -1,8 +1,9 @@
-
+using FluentValidation;
 using IGenServer.Application.Common.Responses;
 using IGenServer.Application.Features.Auth.Commands.LoginUser;
 using IGenServer.Application.Features.Auth.Commands.RegisterUser;
 using IGenServer.Application.Features.Auth.DTOs;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IGenServer.API.Controllers;
@@ -11,92 +12,76 @@ namespace IGenServer.API.Controllers;
 [Route("api/[controller]")]
 public sealed class AuthController : ControllerBase
 {
+    private readonly ISender _sender;
+
+    public AuthController(ISender sender)
+    {
+        _sender = sender;
+    }
+
     [HttpPost("register")]
     public async Task<ActionResult<CommonResponse<AuthResponseDto>>> Register(
         [FromBody] RegisterUserRequestDto request,
-        [FromServices] RegisterUserCommandHandler handler,
-        [FromServices] RegisterUserCommandValidator validator,
         CancellationToken cancellationToken)
     {
-     
-        
-            var command = new RegisterUserCommand(
-                request.FullName,
-                request.Email,
-                request.Password,
-                request.Role,
-                request.TargetYear,
-                request.Expertise
-            );
-
-            var validationResult = await validator.ValidateAsync(command, cancellationToken);
-
-            if(!validationResult.IsValid)
-            {
-                var errors = validationResult.Errors
-                    .Select(error => error.ErrorMessage)
-                    .ToArray();
-
-                return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                    "Validation failed.",errors
-                ));
-            }
-
         try
         {
-            var response = await handler.Handle(command, cancellationToken);
+            var response = await _sender.Send(
+                new RegisterUserCommand(
+                    request.FullName,
+                    request.Email,
+                    request.Password,
+                    request.Role,
+                    request.TargetYear,
+                    request.Expertise),
+                cancellationToken);
 
             return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
-                response,"User registered successfully."
-            ));
-
+                response,
+                "User registered successfully."));
         }
-        catch(InvalidOperationException ex)
+        catch (ValidationException ex)
         {
             return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                "Registration failed.",ex.Message
-            ));
+                "Validation failed.",
+                ex.Errors.Select(x => x.ErrorMessage).ToArray()));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
+                "Registration failed.",
+                ex.Message));
         }
     }
+
     [HttpPost("login")]
     public async Task<ActionResult<CommonResponse<AuthResponseDto>>> Login(
         [FromBody] LoginUserRequestDto request,
-        [FromServices] LoginUserCommandHandler handler,
-        [FromServices] LoginUserCommandValidator validator,
-        CancellationToken cancellationToken
-    )
+        CancellationToken cancellationToken)
     {
-        var command = new LoginUserCommand(
-            request.Email,
-            request.Password
-        );
-
-        var validationResult = await validator.ValidateAsync(command, cancellationToken);
-
-        if(!validationResult.IsValid)
-        {
-            var errors = validationResult.Errors
-                .Select(error => error.ErrorMessage)
-                .ToArray();
-            
-            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                "Validation failed.", errors
-            ));
-        }
         try
         {
-            var response = await handler.Handle(command,cancellationToken);
+            var response = await _sender.Send(
+                new LoginUserCommand(
+                    request.Email,
+                    request.Password),
+                cancellationToken);
 
             return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
-                response, "Login successfull."
-            ));
+                response,
+                "Login successful."));
         }
-        catch(InvalidOperationException ex)
+        catch (ValidationException ex)
         {
             return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                "Login failed.", ex.Message
-            ));
+                "Validation failed.",
+                ex.Errors.Select(x => x.ErrorMessage).ToArray()));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
+                "Login failed.",
+                ex.Message));
         }
     }
 }
-    
