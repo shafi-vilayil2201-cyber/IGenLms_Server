@@ -1,4 +1,3 @@
-using FluentValidation;
 using IGenServer.Application.Common.Responses;
 using IGenServer.Application.Features.Auth.Commands.LoginUser;
 using IGenServer.Application.Features.Auth.Commands.RegisterUser;
@@ -24,34 +23,19 @@ public sealed class AuthController : ControllerBase
         [FromBody] RegisterUserRequestDto request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var response = await _sender.Send(
-                new RegisterUserCommand(
-                    request.FullName,
-                    request.Email,
-                    request.Password,
-                    request.Role,
-                    request.TargetYear,
-                    request.Expertise),
-                cancellationToken);
+        var response = await _sender.Send(
+            new RegisterUserCommand(
+                request.FullName,
+                request.Email,
+                request.Password,
+                request.Role,
+                request.TargetYear,
+                request.Expertise),
+            cancellationToken);
 
-            return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
-                response,
-                "User registered successfully."));
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                "Validation failed.",
-                ex.Errors.Select(x => x.ErrorMessage).ToArray()));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                "Registration failed.",
-                ex.Message));
-        }
+        return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
+            response,
+            "User registered successfully."));
     }
 
     [HttpPost("login")]
@@ -59,29 +43,14 @@ public sealed class AuthController : ControllerBase
         [FromBody] LoginUserRequestDto request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var response = await _sender.Send(
-                new LoginUserCommand(
-                    request.Email,
-                    request.Password),
-                cancellationToken);
+        var response = await _sender.Send(
+            new LoginUserCommand(
+                request.Email,
+                request.Password),
+            cancellationToken);
 
-            return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
-                response,
-                "Login successful."));
-        }
-        catch (ValidationException ex)
-        {
-            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                "Validation failed.",
-                ex.Errors.Select(x => x.ErrorMessage).ToArray()));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(
-                "Login failed.",
-                ex.Message));
-        }
+        return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
+            response,
+            "Login successful."));
     }
 }
