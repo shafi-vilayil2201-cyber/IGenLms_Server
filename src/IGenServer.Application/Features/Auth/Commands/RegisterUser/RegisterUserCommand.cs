@@ -10,4 +10,4 @@ public sealed record RegisterUserCommand(
     string Role,
     int? TargetYear,
     List<string>? Expertise
-    ) : IRequest<AuthResponseDto>;
+    ) : IRequest<AuthCommandResult>;

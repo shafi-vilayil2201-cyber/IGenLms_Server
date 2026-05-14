@@ -1,50 +1,58 @@
 
+
 using IGenServer.Application.Abstractions.Authentication;
 using IGenServer.Application.Abstractions.Persistence;
 using IGenServer.Application.Features.Auth.DTOs;
 using IGenServer.Application.Features.Auth.Enums;
-using IGenServer.Domain.Entities;
 using IGenServer.Domain.Enums;
 using MediatR;
 
-namespace IGenServer.Application.Features.Auth.Commands.LoginUser;
+namespace IGenServer.Application.Features.Auth.Commands.RefreshToken;
 
-public sealed class LoginUserCommandHandler 
-    : IRequestHandler<LoginUserCommand, AuthCommandResult>
+public sealed class RefreshTokenCommandHandler
+    : IRequestHandler<RefreshTokenCommand,AuthCommandResult>
 {
     private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IRefreshTokenService _refreshTokenService;
 
-    public LoginUserCommandHandler(
+    public RefreshTokenCommandHandler(
         IUserRepository userRepository,
-        IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator,
         IRefreshTokenService refreshTokenService
     )
     {
         _jwtTokenGenerator = jwtTokenGenerator;
-        _passwordHasher = passwordHasher;
-        _userRepository = userRepository;
         _refreshTokenService = refreshTokenService;
+        _userRepository = userRepository;
     }
 
     public async Task<AuthCommandResult> Handle(
-        LoginUserCommand command,
-        CancellationToken cancellationToken )
+        RefreshTokenCommand command,
+        CancellationToken cancellationToken
+    )
     {
-        var user = await _userRepository.GetByEmailAsync(command.Email, cancellationToken);
+       var refreshTokenHash = _refreshTokenService.HashToken(command.RefreshToken);
 
-        if(user is null || !_passwordHasher.VerifyPassword(command.Password, user.PasswordHash))
+       var user = await _userRepository.GetByRefreshTokenHashAsync(
+        refreshTokenHash , cancellationToken
+       );
+
+
+        if (user is null)
         {
-            throw new InvalidOperationException("Invalid email or password.");
+            throw new UnauthorizedAccessException("Invalid refresh token.");
         }
 
-        var token = _jwtTokenGenerator.GenerateToken(user);
-        var refreshToken = _refreshTokenService.GenerateToken();
+       if(user.RefreshTokenExpiresAtUtc is null || user.RefreshTokenExpiresAtUtc <= DateTime.UtcNow)
+        {
+            throw new UnauthorizedAccessException("Refresh token expired.");
+        }
 
-        user.RefreshTokenHash = _refreshTokenService.HashToken(refreshToken);
+        var accessToken = _jwtTokenGenerator.GenerateToken(user);
+        var newRefreshToken = _refreshTokenService.GenerateToken();
+
+        user.RefreshTokenHash = _refreshTokenService.HashToken(newRefreshToken);
         user.RefreshTokenCreatedAtUtc = DateTime.UtcNow;
         user.RefreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7);
 
@@ -55,7 +63,7 @@ public sealed class LoginUserCommandHandler
             UserRole.Student => RegistrationNextStep.StudentDashboard,
             UserRole.Mentor => RegistrationNextStep.MentorOnboarding,
             UserRole.Admin => RegistrationNextStep.AdminDashboard,
-            _ => throw new UnauthorizedAccessException("Invalid email or password.")
+            _ => throw new InvalidOperationException("Unsupported user role.")
         };
 
         return new AuthCommandResult
@@ -66,10 +74,11 @@ public sealed class LoginUserCommandHandler
                 FullName = user.FullName,
                 Email = user.Email,
                 Role = user.Role.ToString(),
-                AccessToken = token,
+                AccessToken = accessToken,
                 NextStep = nextStep.ToString()
             },
-            RefreshToken = refreshToken
+             RefreshToken = newRefreshToken
         };
     }
+
 }

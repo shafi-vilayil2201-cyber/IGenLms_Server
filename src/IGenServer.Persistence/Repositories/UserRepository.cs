@@ -33,4 +33,12 @@ public sealed class UserRepository :IUserRepository
             .Include(x => x.MentorProfile)
             .FirstOrDefaultAsync(x => x.Email == email,cancellationToken);
     }
+    public async Task<User?> GetByRefreshTokenHashAsync(
+        string RefreshTokenHash,
+        CancellationToken cancellationToken
+    )
+    {
+        return await _dbContext.Users
+            .FirstOrDefaultAsync(x => x.RefreshTokenHash == RefreshTokenHash, cancellationToken);
+    }
 }

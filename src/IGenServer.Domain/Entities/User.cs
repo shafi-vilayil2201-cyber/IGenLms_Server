@@ -17,4 +17,10 @@ public sealed class User
     public StudentProfile? StudentProfile { get; set; }
 
     public MentorProfile? MentorProfile { get; set; }
+    public string? RefreshTokenHash { get; set; }
+
+    public DateTime? RefreshTokenCreatedAtUtc { get; set; }
+
+    public DateTime? RefreshTokenExpiresAtUtc { get; set; }
+
 }
