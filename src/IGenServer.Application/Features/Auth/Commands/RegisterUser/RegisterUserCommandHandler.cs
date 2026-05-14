@@ -10,23 +10,26 @@ using MediatR;
 namespace IGenServer.Application.Features.Auth.Commands.RegisterUser;
 
 public sealed class RegisterUserCommandHandler
-    : IRequestHandler<RegisterUserCommand, AuthResponseDto>
+    : IRequestHandler<RegisterUserCommand, AuthCommandResult>
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IRefreshTokenService _refreshTokenService;
 
     public RegisterUserCommandHandler(
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IRefreshTokenService refreshTokenService)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _refreshTokenService = refreshTokenService;
     }
 
-    public async Task<AuthResponseDto> Handle(
+    public async Task<AuthCommandResult> Handle(
         RegisterUserCommand command,
         CancellationToken cancellationToken)
     {
@@ -86,14 +89,26 @@ public sealed class RegisterUserCommandHandler
 
         var token = _jwtTokenGenerator.GenerateToken(user);
 
-        return new AuthResponseDto
+        var refreshToken = _refreshTokenService.GenerateToken();
+
+        user.RefreshTokenHash = _refreshTokenService.HashToken(refreshToken);
+        user.RefreshTokenCreatedAtUtc = DateTime.UtcNow;
+        user.RefreshTokenExpiresAtUtc = DateTime.UtcNow.AddDays(7);
+
+        await _userRepository.SaveChangesAsync(cancellationToken);
+
+        return new AuthCommandResult
         {
-            UserId = user.Id,
-            FullName = user.FullName,
-            Email = user.Email,
-            Role = user.Role.ToString(),
-            Token = token,
-            NextStep = nextStep.ToString()
+            Response = new AuthResponseDto
+            {
+                UserId = user.Id,
+                FullName = user.FullName,
+                Email = user.Email,
+                Role = user.Role.ToString(),
+                AccessToken = token,
+                NextStep = nextStep.ToString()
+            },
+            RefreshToken = refreshToken
         };
     }
 }

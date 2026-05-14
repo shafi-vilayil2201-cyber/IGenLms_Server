@@ -11,4 +11,5 @@ public interface IUserRepository
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 
     Task<User?> GetByEmailAsync(string email,CancellationToken cancellationToken = default);
+    Task<User?> GetByRefreshTokenHashAsync(string RefreshTokenHash,CancellationToken cancellationToken);
 }

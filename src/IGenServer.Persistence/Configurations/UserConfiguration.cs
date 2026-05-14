@@ -26,6 +26,12 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
         builder.Property(x=> x.Role)
             .IsRequired();
+
+        builder.Property(x => x.RefreshTokenHash)
+            .HasMaxLength(500);
+        builder.Property(x => x.RefreshTokenCreatedAtUtc);
+        builder.Property(x => x.RefreshTokenExpiresAtUtc);
+
             
         builder.HasOne(x=> x.StudentProfile)
             .WithOne(x => x.User)

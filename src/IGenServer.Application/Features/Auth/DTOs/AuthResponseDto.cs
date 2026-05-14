@@ -10,7 +10,7 @@ public sealed class AuthResponseDto
 
     public string Role { get; init; } = string.Empty;
 
-    public string Token { get; init; } = string.Empty;
+    public string AccessToken { get; init; } = string.Empty;
 
     public string NextStep { get; init; } = string.Empty;
 }
