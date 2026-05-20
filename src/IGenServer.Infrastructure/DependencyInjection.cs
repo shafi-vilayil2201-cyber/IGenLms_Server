@@ -7,6 +7,7 @@ using IGenServer.Application.Common.Behaviors;
 using IGenServer.Infrastructure.Authentication;
 using IGenServer.Persistance.Data;
 using IGenServer.Persistance.Repositories;
+using IGenServer.Persistence.Repositories;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -29,7 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IStudentReadRepository, StudentReadRepository>();
-
+        services.AddScoped<IStudentHabitRepository, StudentHabitRepository>();
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
                 typeof(IGenServer.Application.AssemblyReference).Assembly));
