@@ -20,6 +20,7 @@ public sealed class StudentHabitConfiguration : IEntityTypeConfiguration<Student
             .HasMaxLength(500);
 
         builder.Property(habit => habit.HabitType)
+            .HasConversion<string>()
             .HasMaxLength(50)
             .IsRequired();
 

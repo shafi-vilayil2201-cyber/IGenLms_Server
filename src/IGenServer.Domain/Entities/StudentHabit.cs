@@ -1,3 +1,5 @@
+using IGenServer.Domain.Enums;
+
 namespace IGenServer.Domain.Entities;
 
 public sealed class StudentHabit
@@ -10,7 +12,7 @@ public sealed class StudentHabit
 
     public string? Description { get; set; }
 
-    public string HabitType { get; set; } = "study";
+    public StudentHabitType HabitType { get; set; } = StudentHabitType.Study;
 
     public string ReminderTime { get; set; } = "06:30";
 
