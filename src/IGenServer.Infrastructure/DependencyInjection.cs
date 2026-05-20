@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IStudentReadRepository, StudentReadRepository>();
 
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
