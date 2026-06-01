@@ -31,6 +31,10 @@ public static class DependencyInjection
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         services.AddScoped<IStudentReadRepository, StudentReadRepository>();
         services.AddScoped<IStudentHabitRepository, StudentHabitRepository>();
+        services.AddScoped<IProgramRepository, ProgramRepository>();
+        services.AddScoped<ISubjectRepository, SubjectRepository>();
+        services.AddScoped<ISubjectCurriculumRepository, SubjectCurriculumRepository>();
+        services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
                 typeof(IGenServer.Application.AssemblyReference).Assembly));
