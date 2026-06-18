@@ -3,6 +3,7 @@ using IGenServer.Application.Features.AdminSubjectCurriculum.Commands.CreateSubj
 using IGenServer.Application.Features.AdminSubjectCurriculum.Commands.CreateSubjectMonth;
 using IGenServer.Application.Features.AdminSubjectCurriculum.Commands.CreateSubjectWeek;
 using IGenServer.Application.Features.AdminSubjectCurriculum.DTOs;
+using IGenServer.Application.Features.AdminSubjectCurriculum.Queries.GetSubjectCurriculum;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -68,5 +69,18 @@ public sealed class AdminSubjectCurriculumController : ControllerBase
         return Ok(CommonResponse<SubjectDayTopicDto>.SuccessResponse(
             result,
             "Subject day topic created successfully."));
+    }
+    [HttpGet("api/admin/subjects/{subjectId:int}/curriculum")]
+    public async Task<ActionResult<CommonResponse<SubjectCurriculumDto>>> GetSubjectCurriculum(
+    int subjectId,
+    CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(
+            new GetSubjectCurriculumQuery(subjectId),
+            cancellationToken);
+
+        return Ok(CommonResponse<SubjectCurriculumDto>.SuccessResponse(
+            result,
+            "Subject curriculum loaded successfully."));
     }
 }

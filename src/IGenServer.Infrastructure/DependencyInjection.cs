@@ -8,6 +8,7 @@ using IGenServer.Infrastructure.Authentication;
 using IGenServer.Persistance.Data;
 using IGenServer.Persistance.Repositories;
 using IGenServer.Persistence.Repositories;
+using IGenServer.Persistence.Repositories.Dapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -35,6 +36,8 @@ public static class DependencyInjection
         services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<ISubjectCurriculumRepository, SubjectCurriculumRepository>();
         services.AddScoped<IAdminCourseRepository, AdminCourseRepository>();
+        services.AddScoped<IStudentCourseRepository, StudentCourseRepository>();
+        services.AddScoped<IAdminCurriculumReadRepository, AdminCurriculumReadRepository>();
         services.AddMediatR(cfg =>
             cfg.RegisterServicesFromAssembly(
                 typeof(IGenServer.Application.AssemblyReference).Assembly));
