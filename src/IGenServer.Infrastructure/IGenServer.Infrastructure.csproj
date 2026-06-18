@@ -9,9 +9,17 @@
   <ItemGroup>
     <ProjectReference Include="../IGenServer.Application/IGenServer.Application.csproj" />
     <ProjectReference Include="../IGenServer.Domain/IGenServer.Domain.csproj" />
+    <ProjectReference Include="..\IGenServer.Persistence\IGenServer.Persistence.csproj" />
   </ItemGroup>
   <ItemGroup>
   <FrameworkReference Include="Microsoft.AspNetCore.App" />
 </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.6.2" />
+  </ItemGroup>
+  <ItemGroup>
+<PackageReference Include="MediatR" Version="14.1.0" />
+</ItemGroup>
+
 
 </Project>
