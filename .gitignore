@@ -5,6 +5,8 @@
 
 # dotenv files
 .env
+src/IGenServer.API/appsettings.Development.json
+src/IGenServer.DbSync/appsettings.Development.json
 
 # User-specific files
 *.rsuser
