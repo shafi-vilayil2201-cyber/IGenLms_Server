@@ -26,20 +26,27 @@ public sealed class AuthController : ControllerBase
         [FromBody] RegisterUserRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(
-            new RegisterUserCommand(
-                request.FullName,
-                request.Email,
-                request.Password,
-                request.Role,
-                request.TargetYear,
-                request.Expertise),
-            cancellationToken);
-        SetRefreshTokenCookie(result.RefreshToken);
+        try
+        {
+            var result = await _sender.Send(
+                new RegisterUserCommand(
+                    request.FullName,
+                    request.Email,
+                    request.Password,
+                    request.Role,
+                    request.TargetYear,
+                    request.Expertise),
+                cancellationToken);
+            SetRefreshTokenCookie(result.RefreshToken);
 
-        return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
-            result.Response,
-            "User registered successfully."));
+            return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
+                result.Response,
+                "User registered successfully."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(CommonResponse<AuthResponseDto>.FailureResponse(ex.Message, ex.Message));
+        }
     }
 
     [HttpPost("login")]
@@ -47,17 +54,28 @@ public sealed class AuthController : ControllerBase
         [FromBody] LoginUserRequestDto request,
         CancellationToken cancellationToken)
     {
-        var result = await _sender.Send(
-            new LoginUserCommand(
-                request.Email,
-                request.Password),
-            cancellationToken);
+        try
+        {
+            var result = await _sender.Send(
+                new LoginUserCommand(
+                    request.Email,
+                    request.Password),
+                cancellationToken);
 
-        SetRefreshTokenCookie(result.RefreshToken);
+            SetRefreshTokenCookie(result.RefreshToken);
 
-        return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
-            result.Response,
-            "Login successful."));
+            return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
+                result.Response,
+                "Login successful."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(CommonResponse<AuthResponseDto>.FailureResponse(ex.Message, ex.Message));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(CommonResponse<AuthResponseDto>.FailureResponse(ex.Message, ex.Message));
+        }
     }
     [HttpPost("refresh")]
     public async Task<ActionResult<CommonResponse<AuthResponseDto>>> Refresh(
@@ -67,18 +85,31 @@ public sealed class AuthController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            throw new UnauthorizedAccessException("Refresh token is missing.");
+            return Unauthorized(CommonResponse<AuthResponseDto>.FailureResponse(
+                "Refresh token is missing.",
+                "Refresh token is missing."));
         }
 
-        var result = await _sender.Send(
-            new RefreshTokenCommand(refreshToken),
-            cancellationToken);
+        try
+        {
+            var result = await _sender.Send(
+                new RefreshTokenCommand(refreshToken),
+                cancellationToken);
 
-        SetRefreshTokenCookie(result.RefreshToken);
+            SetRefreshTokenCookie(result.RefreshToken);
 
-        return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
-            result.Response,
-            "Token refreshed successfully."));
+            return Ok(CommonResponse<AuthResponseDto>.SuccessResponse(
+                result.Response,
+                "Token refreshed successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(CommonResponse<AuthResponseDto>.FailureResponse(ex.Message, ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Unauthorized(CommonResponse<AuthResponseDto>.FailureResponse(ex.Message, ex.Message));
+        }
     }
     [HttpPost("logout")]
     public async Task<ActionResult<CommonResponse<string>>> Logout(

@@ -1,36 +1,4 @@
-@host = http://localhost:5157
+@host = http://localhost:5156
 
-### Register Student
-POST {{host}}/api/Auth/register
-Content-Type: application/json
-
-{
-  "fullName": "Student Demo",
-  "email": "student.demo@example.com",
-  "password": "StrongPassword123!",
-  "role": "Student",
-  "targetYear": 2027,
-  "expertise": null
-}
-
-### Register Mentor
-POST {{host}}/api/Auth/register
-Content-Type: application/json
-
-{
-  "fullName": "Mentor Demo",
-  "email": "mentor.demo@example.com",
-  "password": "StrongPassword123!",
-  "role": "Mentor",
-  "targetYear": null,
-  "expertise": ["C#", "SQL Server"]
-}
-
-### Login Student
-POST {{host}}/api/Auth/login
-Content-Type: application/json
-
-{
-  "email": "student.demo@example.com",
-  "password": "StrongPassword123!"
-}
+GET {{host}}/weatherforecast/
+Accept: application/json

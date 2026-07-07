@@ -5,11 +5,8 @@
 
 # dotenv files
 .env
-
-# Local development connection settings
+src/IGenServer.API/appsettings.Development.json
 src/IGenServer.DbSync/appsettings.Development.json
-
-
 
 # User-specific files
 *.rsuser
@@ -485,4 +482,3 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
-src/IGenServer.API/appsettings.Development.json
